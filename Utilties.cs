@@ -15,7 +15,7 @@ namespace ATMMonitor
             using (SqlConnection connection = new SqlConnection(connectionstr))
             {
                 SqlCommand sqlcmd = new SqlCommand();
-                sqlcmd.Parameters.Add(new SqlParameter("message", message));
+                sqlcmd.Parameters.Add(new SqlParameter("message", System.Reflection.Assembly.GetExecutingAssembly().GetName().Name + ":" + message));
                 //sqlcmd.Parameters.Add(new SqlParameter("dt", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss:fff")));
                 connection.Open();
                 sqlcmd.Connection = connection;
@@ -31,7 +31,7 @@ namespace ATMMonitor
             var t1 = TimeSpan.Parse("08:45");
             var t2 = TimeSpan.Parse("13:45");
             //var t3 = TimeSpan.Parse("15:00");
-            return tCurrent >= t1 && tCurrent < t2 ? morning_tradesession : night_tradesession;
+            return tCurrent >= t1 && tCurrent <= t2 ? morning_tradesession : night_tradesession;
         }
 
 

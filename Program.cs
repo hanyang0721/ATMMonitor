@@ -15,14 +15,20 @@ namespace ATMMonitor
         
         static void Main(string[] args)
         {
-            if (!CheckATMRunning())
+            if (DateTime.Now.ToString("HH:mm") == "08:00" || DateTime.Now.ToString("HH:mm") == "20:00")
             {
-                RestartSKOrder();
+                RestartSKQuoteWithKLine();
             }
-
-            if (!CheckTickRunning())
+            else
             {
-                RestartSKQuote();
+                if (!CheckATMRunning())
+                {
+                    RestartSKOrder();
+                }
+                if (!CheckTickRunning())
+                {
+                    RestartSKQuote();
+                }
             }
             PushMessageToLine();
         }
@@ -42,7 +48,7 @@ namespace ATMMonitor
                     
                     if (sqlcmd.ExecuteScalar() != null)
                     {
-                        util.RecordLog(connectionstr, "1. Tick delay than expected");
+                        util.RecordLog(connectionstr, "990003. Tick delay than expected");
                         running = false;
                     }
 
@@ -50,9 +56,19 @@ namespace ATMMonitor
 
                     if (sqlcmd.ExecuteScalar() != null)
                     {
-                        util.RecordLog(connectionstr, "1. Missing Tick found");
+                        util.RecordLog(connectionstr, "990002. Missing Tick found");
                         running = false;
                     }
+
+                    sqlcmd.CommandText = "EXEC dbo.sp_ChkTickRunning @session=" + util.GetTradeSession() + ",@functioncode=2";
+
+                    if (sqlcmd.ExecuteScalar() != null)
+                    {
+                        util.RecordLog(connectionstr, "990001. Min date and Day date are not equal ");
+                        running = false;
+                    }
+
+
                     connection.Close();
                     return running;
                 }
@@ -79,7 +95,7 @@ namespace ATMMonitor
                     sqlcmd.Parameters.Add(interval);
                     connection.Open();
                     sqlcmd.Connection = connection;
-                    sqlcmd.CommandText = "EXEC dbo.ChkSKOorder @intervalms=@intervalms";
+                    sqlcmd.CommandText = "EXEC dbo.sp_ChkSKOorder @intervalms=@intervalms";
 
                     if (sqlcmd.ExecuteScalar() != null)  
                     {
@@ -100,7 +116,7 @@ namespace ATMMonitor
         {
             try
             {
-                util.RecordLog("3.Restarting SKOrder", connectionstr);
+                util.RecordLog(connectionstr, "3.Restarting SKOrder");
                 Process[] proc = Process.GetProcessesByName("StockATM");
                 proc[0].Kill();
             }
@@ -114,6 +130,32 @@ namespace ATMMonitor
                 p.StartInfo = new ProcessStartInfo(StockATMpath)
                 {
                     Arguments = "-starttime " + RoundUp(DateTime.Now, TimeSpan.FromMinutes(5)).ToString("HH:mm"),
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+                p.Start();
+            }
+        }
+
+        private static void RestartSKQuoteWithKLine()
+        {
+            try
+            {
+                util.RecordLog(connectionstr,"3.Download SKQuote KLine");
+                Process[] proc = Process.GetProcessesByName("SKQuote");
+                proc[0].Kill();
+            }
+            catch (Exception ex)
+            {
+                util.RecordLog(connectionstr, "Download SKQuote " + ex.Message);
+            }
+            finally
+            {
+                Process p = new Process();
+                p.StartInfo = new ProcessStartInfo(SKQuotepath)
+                {
+                    Arguments = "-KLine",
                     RedirectStandardOutput = true,
                     UseShellExecute = false,
                     CreateNoWindow = true
@@ -170,8 +212,10 @@ namespace ATMMonitor
                 string output = p.StandardOutput.ReadToEnd();
                 p.WaitForExit();
             }
-            catch
-            { }
+            catch (Exception ex)
+            {
+                util.RecordLog(connectionstr, "PushMessageToLine " + ex.Message);
+            }
         }
 
     }
