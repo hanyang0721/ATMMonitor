@@ -9,17 +9,21 @@ namespace ATMMonitor
         //In other area, its defined as 0
         public const int morning_tradesession = 0;
         public const int night_tradesession = 1;
+        public string INFO { get; } = "INFO";
+        public string ALARM { get; } =  "ALARM" ;
 
-        public void RecordLog(string connectionstr, string message)
+        public void RecordLog(string connectionstr, string message, string msgtype)
         {
             using (SqlConnection connection = new SqlConnection(connectionstr))
             {
                 SqlCommand sqlcmd = new SqlCommand();
-                sqlcmd.Parameters.Add(new SqlParameter("message", System.Reflection.Assembly.GetExecutingAssembly().GetName().Name + ":" + message));
+                sqlcmd.Parameters.Add(new SqlParameter("message",  message));
+                sqlcmd.Parameters.Add(new SqlParameter("Service", System.Reflection.Assembly.GetExecutingAssembly().GetName().Name));
+                sqlcmd.Parameters.Add(new SqlParameter("MsgType", msgtype));
                 //sqlcmd.Parameters.Add(new SqlParameter("dt", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss:fff")));
                 connection.Open();
                 sqlcmd.Connection = connection;
-                sqlcmd.CommandText = "INSERT INTO [dbo].[SystemLog] (ExecTime, Message) VALUES (GETDATE(), CAST(@message as varchar(256)) )";
+                sqlcmd.CommandText = "INSERT INTO [dbo].[SystemLog] (Message, MsgType, Service) VALUES (CAST(@message as varchar(256)), @MsgType, @Service )";
                 sqlcmd.ExecuteNonQuery();
                 connection.Close();
             }
