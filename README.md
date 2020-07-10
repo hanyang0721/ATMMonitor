@@ -4,6 +4,8 @@
 <https://www.capital.com.tw/Service2/download/API.asp>
 
 ### 提供功能:
+任何交易所需要的防呆檢測裝置都放在這
+
 1. 透過sp檢測Tick完整性, 是否delay過久
 2. 檢測SKOrder是否正常啟用
 3. 重新發送未送出的line message
