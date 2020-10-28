@@ -23,7 +23,7 @@ namespace ATMMonitor
                 //sqlcmd.Parameters.Add(new SqlParameter("dt", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss:fff")));
                 connection.Open();
                 sqlcmd.Connection = connection;
-                sqlcmd.CommandText = "INSERT INTO [dbo].[SystemLog] (Message, MsgType, Service) VALUES (CAST(@message as varchar(256)), @MsgType, @Service )";
+                sqlcmd.CommandText = "INSERT INTO [dbo].[SystemLog] (ExecTime,Message, MsgType, Service) VALUES (GETDATE(),CAST(@message as nvarchar(256)), @MsgType, @Service )";
                 sqlcmd.ExecuteNonQuery();
                 connection.Close();
             }
